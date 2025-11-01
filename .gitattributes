@@ -1,0 +1,8 @@
+# Auto detect text files and perform LF normalization
+* text=auto
+logs filter=lfs diff=lfs merge=lfs -text
+logs/model_48000_attn.pt filter=lfs diff=lfs merge=lfs -text
+logs/model_48000_f0+attn.pt filter=lfs diff=lfs merge=lfs -text
+logs/model_48000_baseline.pt filter=lfs diff=lfs merge=lfs -text
+logs/model_48000_f0ad.pt filter=lfs diff=lfs merge=lfs -text
+*.pt filter=lfs diff=lfs merge=lfs -text
