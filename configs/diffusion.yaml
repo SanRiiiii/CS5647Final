@@ -16,8 +16,7 @@ data:
   win_length: 512
 device: cuda
 env:
-  comodir: logs/como
-  expdir: logs/teacher
+  expdir: logs_3
   gpu_id: 0
 infer:
   method: dpm-solver++
@@ -25,139 +24,45 @@ model:
   n_chans: 512
   n_hidden: 256
   n_layers: 20
-  n_spk: 129
   type: Diffusion
   use_pitch_aug: true
-spk:
-  Alto-1: 12
-  Alto-2: 72
-  Alto-3: 68
-  Alto-4: 67
-  Alto-5: 73
-  Alto-6: 10
-  Alto-7: 5
-  Bass-1: 109
-  Bass-2: 53
-  Bass-3: 41
-  Soprano-1: 65
-  Soprano-2: 3
-  Soprano-3: 13
-  Tenor-1: 116
-  Tenor-2: 49
-  Tenor-3: 32
-  Tenor-4: 35
-  Tenor-5: 47
-  Tenor-6: 118
-  Tenor-7: 98
-  p225: 23
-  p226: 95
-  p227: 87
-  p228: 96
-  p229: 86
-  p230: 52
-  p231: 40
-  p232: 97
-  p233: 108
-  p234: 107
-  p236: 39
-  p237: 54
-  p238: 42
-  p239: 51
-  p240: 24
-  p241: 22
-  p243: 89
-  p244: 88
-  p245: 85
-  p246: 20
-  p247: 25
-  p248: 17
-  p249: 31
-  p250: 99
-  p251: 119
-  p252: 48
-  p253: 36
-  p254: 33
-  p255: 50
-  p256: 117
-  p257: 101
-  p258: 110
-  p259: 104
-  p260: 113
-  p261: 103
-  p262: 38
-  p263: 43
-  p264: 45
-  p265: 37
-  p266: 105
-  p267: 112
-  p268: 100
-  p269: 115
-  p270: 19
-  p271: 27
-  p272: 93
-  p273: 82
-  p274: 83
-  p275: 92
-  p276: 30
-  p277: 15
-  p278: 26
-  p279: 21
-  p280: 84
-  p281: 91
-  p282: 29
-  p283: 16
-  p284: 18
-  p285: 28
-  p286: 94
-  p287: 81
-  p288: 90
-  p292: 106
-  p293: 111
-  p294: 114
-  p295: 102
-  p297: 44
-  p298: 34
-  p299: 46
-  p300: 69
-  p301: 80
-  p302: 8
-  p303: 1
-  p304: 0
-  p305: 9
-  p306: 79
-  p307: 70
-  p308: 76
-  p310: 62
-  p311: 60
-  p312: 121
-  p313: 125
-  p314: 124
-  p315: 122
-  p316: 58
-  p317: 63
-  p318: 57
-  p323: 120
-  p326: 64
-  p329: 59
-  p330: 77
-  p333: 6
-  p334: 7
-  p335: 2
-  p336: 71
-  p339: 78
-  p340: 128
-  p341: 123
-  p343: 61
-  p345: 55
-  p347: 127
-  p351: 11
-  p360: 14
-  p361: 4
-  p362: 66
-  p363: 75
-  p364: 74
-  p374: 56
-  p376: 126
+  use_attention: true  # 启用多模态注意力机制
+  
+  # 注意力机制配置
+  attention:
+    num_heads: 8
+    dropout: 0.1
+    init_alpha: 1.0  # 门控固定为1.0，最大化speaker依赖
+    num_layers: 3  # StackedMultiModalCrossAttention层数
+    
+  # Speaker Encoder配置（DEPRECATED: 现在使用spk_embd_transformer）
+  # speaker_encoder:
+  #   c_in: 80
+  #   c_h: 256
+  #   c_out: 256
+  #   kernel_size: 5
+  #   bank_size: 8
+  #   bank_scale: 1
+  #   c_bank: 256
+  #   n_conv_blocks: 6
+  #   n_dense_blocks: 2
+  #   subsample: [1,2,1,2,1,2]
+  #   act: "lrelu"
+  #   dropout_rate: 0.1
+
+  # 说话人嵌入变换组件（可选）
+  spk_embd_transformer:
+    enabled: false         # 是否启用该组件
+    combine_weights: [1, 2]  # 原始:变换 后的加权比（1:2）
+    transform_type: "linear"  # 变换类型: "linear", "gated", "film"
+    transform_config:     # 变换器配置参数
+      # 线性变换: 无需额外配置
+      # 门控变换:
+      #   num_layers: 3
+      #   hidden_dim: 512
+      # FiLM变换:
+      #   condition_dim: 128
+      #   num_film_layers: 2
 train:
   amp_dtype: fp32
   batch_size: 48
@@ -165,16 +70,38 @@ train:
   cache_device: cpu
   cache_fp16: true
   comolr: 5.0e-05
-  decay_step: 100000
-  epochs: 100000
+  decay_step: 25000
+  epochs: 55
   gamma: 0.5
   interval_force_save: 2000
-  interval_log: 10
-  interval_val: 2000
+  interval_log: 100
+  interval_val: 2000  # Model saving interval (validation skipped for faster training)
   lr: 0.0001
-  num_workers: 4
+  num_workers: 8
   save_opt: false
   weight_decay: 0
+  
+  # F0对抗训练参数（独立控制）
+  f0_adversarial_training:
+    enabled: false              # 是否启用F0对抗训练
+    start_step: 80000         # 开始F0对抗训练的步数
+    total_steps: 100000        # F0对抗训练的总步数
+    loss_weight: 0.1         # F0对抗损失权重
+  
+  # GRL参数（独立控制）
+  grl_scheduling:
+    gamma: 10.0               # GRL增长速度控制参数
+    max_lambda: 0.12          # GRL lambda的最大值
+  
+  # 训练防护措施
+  gradient_clip_norm: 1.0  # 梯度裁剪范数
+  
+  # 早停机制
+  patience: 10  # 早停耐心值
+  min_delta: 0.001  # 最小改善阈值
+  lr_patience: 5  # 学习率调度耐心值
+  lr_factor: 0.5  # 学习率衰减因子
+  min_lr: 1e-6  # 最小学习率
 vocoder:
   ckpt: m4singer_hifigan/model_ckpt_steps_1970000.ckpt
   type: m4-gan
