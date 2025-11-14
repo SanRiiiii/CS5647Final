@@ -1,26 +1,16 @@
 <div align="center">
-<h1>CoMoSVC: Consistency Model Based Singing Voice Conversion</h1>
+<h1>Improve Timbre Consistency in Cross Domain Singing Voice Conversion</h1>
 
-[中文文档](./Readme_CN.md)
 </div>
 
-A consistency model based Singing Voice Conversion system is composed, which is inspired by [CoMoSpeech](https://github.com/zhenye234/CoMoSpeech): One-Step Speech and Singing Voice Synthesis via Consistency Model. 
+Our Project is inspired by [CoMoSVC](https://github.com/Grace9994/CoMoSVC).
 
-This is an implemention of the paper [CoMoSVC](https://arxiv.org/pdf/2401.01792.pdf).
-## Improvements
-The subjective evaluations are illustrated through the table below.
-<center><img src="https://comosvc.github.io/table3.jpg" width="800"></center>
 
 ## Environment
-We have tested the code and it runs successfully on Python 3.8, so you can set up your Conda environment using the following command:
+You can set up your Conda environment using the following command:
 
 ```shell
-conda create -n Your_Conda_Environment_Name python=3.8
-```
-Then after activating your conda environment, you can install the required packages under it by:
-
-```shell
-pip install -r requirements.txt
+conda env create -f environment.yaml
 ```
 
 ## Download the Checkpoints
@@ -41,7 +31,12 @@ You should download the pitch_extractor checkpoint of the [m4singer_pe](https://
 ```shell
 unzip m4singer_pe.zip
 ```
+### 3. samresnet34
+You should download the pitch_extractor checkpoint of the [samresnet34](https://wenet.org.cn/downloads?models=wespeaker&version=voxblink2_samresnet34_ft.zip) and then unzip the zip file by 
 
+```shell
+voxblink2_samresnet34_ft.zip
+```
 ## Dataset Preparation 
 
 You should first create the folders by
@@ -103,25 +98,29 @@ python preprocessing2_flist.py
 ```shell
 python preprocessing3_feature.py -c your_config_file -n num_processes 
 ```
+### 4. Extract Timbre Features
 
+```shell
+python extract_spk_embd.py --base_dir ./dataset_raw --result_dir ./dataset
+```
+### 5. Extract F0 Features
+
+```shell
+python extract_spk_embd.py --dataset_dir ./dataset
+```
 
 ## Training
 
-### 1. Train the Teacher Model
+### 1. Set up config file
+
+### 2. Train the  Model
 
 ```shell
 python train.py
 ```
-The checkpoints will be saved in the `logs/teacher` directory
-
-### 2. Train the Consistency Model
-
-If you want to adjust the config file, you can duplicate a new config file and modify some parameters.
+The checkpoints will be saved in the `logs` directory
 
 
-```shell
-python train.py -t -c Your_new_configfile_path -p The_teacher_model_checkpoint_path 
-```
 
 ## Inference
 You should put the audios you want to convert under the `raw` directory firstly.
@@ -143,15 +142,4 @@ python inference_main.py -ts 50 -tm "logs/teacher/model_800000.pt" -tc "logs/tea
 
 -s refers to the target singer
 
-### Inference by the Consistency Model
 
-```shell
-python inference_main.py -ts 1 -cm "logs/como/model_800000.pt" -cc "logs/como/config.yaml" -n "src.wav" -k 0 -s "target_singer" -t
-```
--ts refers to the total number of iterative steps during inference for the student model
-
--cm refers to the como_model_path
-
--cc refers to the como_config_path
-
--t means it is not the teacher model and you don't need to specify anything after it 
