@@ -9,7 +9,7 @@ import os
 from data_loaders import get_data_loaders
 import utils
 from solver import train
-from ComoSVC import ComoSVC
+from SVCmodel import SVCmodel
 from Vocoder import Vocoder
 
 
@@ -45,7 +45,7 @@ if __name__ == '__main__':
     vocoder = Vocoder(args.vocoder.type, args.vocoder.ckpt, device=args.device)
     
     # load model
-    model = ComoSVC(
+    model = SVCmodel(
                 args.data.encoder_out_channels, 
                 args.model.use_pitch_aug,
                 vocoder.dimension,
@@ -60,7 +60,7 @@ if __name__ == '__main__':
     optimizer = torch.optim.AdamW(model.parameters(), lr=args.train.lr)
     initial_global_step, model, optimizer = utils.load_model(args.env.expdir, model, optimizer, device=args.device)
     
-    logger.info(f' > Training ComoSVC model.')
+    logger.info(f' > Training SVCmodel model.')
 
 
 

@@ -1,7 +1,6 @@
 import numpy as np
 import torch
 import copy
-from pitch_extractor import PitchExtractor
 from wavenet import WaveNet
 
 import numpy as np
@@ -39,7 +38,6 @@ class Como(BaseModule):
     def __init__(self, out_dims, n_layers, n_chans, n_hidden, total_steps):
         super().__init__()
         self.denoise_fn = WaveNet(out_dims, n_layers, n_chans, n_hidden)
-        self.pe = PitchExtractor()
 
         self.P_mean =-1.2 
         self.P_std =1.2 

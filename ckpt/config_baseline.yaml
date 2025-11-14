@@ -1,0 +1,75 @@
+data:
+  cnhubertsoft_gate: 10
+  duration: 2
+  encoder: vec768l12
+  encoder_hop_size: 320
+  encoder_out_channels: 768
+  encoder_sample_rate: 16000
+  extensions:
+  - wav
+  filter_length: 512
+  hop_length: 128
+  sampling_rate: 24000
+  training_files: filelists/train.txt
+  unit_interpolate_mode: nearest
+  validation_files: filelists/val.txt
+  win_length: 512
+device: cuda
+env:
+  expdir: logs_2
+  gpu_id: 0
+infer:
+  method: dpm-solver++
+model:
+  attention:
+    dropout: 0.1
+    init_alpha: 1.0
+    num_heads: 8
+    num_layers: 3
+  n_chans: 512
+  n_hidden: 256
+  n_layers: 20
+  spk_embd_transformer:
+    combine_weights:
+    - 1
+    - 2
+    enabled: false
+    transform_config: null
+    transform_type: linear
+  type: Diffusion
+  use_attention: false
+  use_pitch_aug: true
+train:
+  amp_dtype: fp32
+  batch_size: 48
+  cache_all_data: true
+  cache_device: cpu
+  cache_fp16: true
+  comolr: 5.0e-05
+  decay_step: 25000
+  epochs: 5
+  f0_adversarial_training:
+    enabled: false
+    loss_weight: 0.1
+    start_step: 20000
+    total_steps: 100000
+  gamma: 0.5
+  gradient_clip_norm: 1.0
+  grl_scheduling:
+    gamma: 10.0
+    max_lambda: 0.12
+  interval_force_save: 2000
+  interval_log: 100
+  interval_val: 2000
+  lr: 0.0001
+  lr_factor: 0.5
+  lr_patience: 5
+  min_delta: 0.001
+  min_lr: 1e-6
+  num_workers: 8
+  patience: 10
+  save_opt: false
+  weight_decay: 0
+vocoder:
+  ckpt: m4singer_hifigan/model_ckpt_steps_1970000.ckpt
+  type: m4-gan

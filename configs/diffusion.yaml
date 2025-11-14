@@ -16,7 +16,7 @@ data:
   win_length: 512
 device: cuda
 env:
-  expdir: logs_3
+  expdir: logs_6
   gpu_id: 0
 infer:
   method: dpm-solver++
@@ -26,43 +26,22 @@ model:
   n_layers: 20
   type: Diffusion
   use_pitch_aug: true
-  use_attention: true  # 启用多模态注意力机制
+  use_attention: true  
   
   # 注意力机制配置
   attention:
     num_heads: 8
     dropout: 0.1
-    init_alpha: 1.0  # 门控固定为1.0，最大化speaker依赖
-    num_layers: 3  # StackedMultiModalCrossAttention层数
+    init_alpha: 1.0  
+    num_layers: 3  
     
-  # Speaker Encoder配置（DEPRECATED: 现在使用spk_embd_transformer）
-  # speaker_encoder:
-  #   c_in: 80
-  #   c_h: 256
-  #   c_out: 256
-  #   kernel_size: 5
-  #   bank_size: 8
-  #   bank_scale: 1
-  #   c_bank: 256
-  #   n_conv_blocks: 6
-  #   n_dense_blocks: 2
-  #   subsample: [1,2,1,2,1,2]
-  #   act: "lrelu"
-  #   dropout_rate: 0.1
 
-  # 说话人嵌入变换组件（可选）
   spk_embd_transformer:
-    enabled: false         # 是否启用该组件
-    combine_weights: [1, 2]  # 原始:变换 后的加权比（1:2）
-    transform_type: "linear"  # 变换类型: "linear", "gated", "film"
-    transform_config:     # 变换器配置参数
-      # 线性变换: 无需额外配置
-      # 门控变换:
-      #   num_layers: 3
-      #   hidden_dim: 512
-      # FiLM变换:
-      #   condition_dim: 128
-      #   num_film_layers: 2
+    enabled: true       
+    combine_weights: [2, 1]  
+    transform_type: "linear"  
+    transform_config:     
+
 train:
   amp_dtype: fp32
   batch_size: 48
@@ -81,27 +60,20 @@ train:
   save_opt: false
   weight_decay: 0
   
-  # F0对抗训练参数（独立控制）
   f0_adversarial_training:
-    enabled: false              # 是否启用F0对抗训练
-    start_step: 80000         # 开始F0对抗训练的步数
-    total_steps: 100000        # F0对抗训练的总步数
-    loss_weight: 0.1         # F0对抗损失权重
-  
-  # GRL参数（独立控制）
+    enabled: true             
+    start_step: 20000         
+    total_steps: 50000        
+    loss_weight: 0.1         
   grl_scheduling:
-    gamma: 10.0               # GRL增长速度控制参数
-    max_lambda: 0.12          # GRL lambda的最大值
-  
-  # 训练防护措施
-  gradient_clip_norm: 1.0  # 梯度裁剪范数
-  
-  # 早停机制
-  patience: 10  # 早停耐心值
-  min_delta: 0.001  # 最小改善阈值
-  lr_patience: 5  # 学习率调度耐心值
-  lr_factor: 0.5  # 学习率衰减因子
-  min_lr: 1e-6  # 最小学习率
+    gamma: 10.0               
+    max_lambda: 0.12          
+  gradient_clip_norm: 1.0  
+  patience: 10  
+  min_delta: 0.001  
+  lr_patience: 5  
+  lr_factor: 0.5  
+  min_lr: 1e-6  
 vocoder:
   ckpt: m4singer_hifigan/model_ckpt_steps_1970000.ckpt
   type: m4-gan

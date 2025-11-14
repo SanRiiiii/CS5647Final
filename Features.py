@@ -6,7 +6,7 @@ from fairseq import checkpoint_utils
 
 class SpeechEncoder(object):
     def __init__(self, vec_path="Content/checkpoint_best_legacy_500.pt", device=None):
-        self.model = None  # This is Model
+        self.model = None 
         self.hidden_dim = 768
         pass
 

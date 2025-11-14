@@ -1,6 +1,4 @@
-'''
-author: wayn391@mastertones
-'''
+
 
 import datetime
 import os

@@ -74,7 +74,7 @@ class Svc(object):
                  diffusion_model_path="logs/model_8000.pt",
                  diffusion_config_path="configs/diffusion.yaml",
                  total_steps=1,
-                 dataset_path="./dataset"  # 新增：dataset路径，用于加载spk_embd
+                 dataset_path="./dataset"
                  ):
 
         self.total_steps = total_steps
@@ -85,53 +85,37 @@ class Svc(object):
         self.dtype = torch.float32
         self.speech_encoder = self.diffusion_args.data.encoder
         self.unit_interpolate_mode = self.diffusion_args.data.unit_interpolate_mode if self.diffusion_args.data.unit_interpolate_mode is not None else 'left'
-        self.dataset_path = dataset_path  # 保存dataset路径
+        self.dataset_path = dataset_path
 
-        # load hubert and model
         from Features import ContentVec768L12
         self.hubert_model = ContentVec768L12(device = self.dev)
         self.volume_extractor = Volume_Extractor(self.hop_size)
         
-        # 缓存已加载的speaker embeddings
         self.spk_embd_cache = {}
 
     def load_speaker_embedding(self, speaker_name, random_select=True):
-        """
-        从dataset目录加载指定说话人的speaker embedding
-        
-        Args:
-            speaker_name: 说话人名称（对应dataset下的文件夹名）
-            random_select: 是否随机选择一个.spk.npy文件（默认True）
-            
-        Returns:
-            spk_embd: [1, spk_embd_dim] 的tensor
-        """
-        # 构建路径：dataset/speaker_name/
         speaker_dir = os.path.join(self.dataset_path, speaker_name)
         if not os.path.exists(speaker_dir):
             raise FileNotFoundError(f"Speaker directory not found: {speaker_dir}")
         
-        # 查找所有.spk.npy文件
         spk_files = [f for f in os.listdir(speaker_dir) if f.endswith('.spk.npy')]
         if not spk_files:
             raise FileNotFoundError(f"No .spk.npy file found in: {speaker_dir}")
         
-        # 随机选择一个或选第一个
         if random_select:
             import random
             selected_file = random.choice(spk_files)
-            print(f"🎲 Randomly selected from {len(spk_files)} speaker embeddings")
+            print(f" Randomly selected from {len(spk_files)} speaker embeddings")
         else:
             selected_file = spk_files[0]
         
         spk_file_path = os.path.join(speaker_dir, selected_file)
-        print(f"🎤 Loading speaker embedding: {speaker_name}/{selected_file}")
+        print(f" Loading speaker embedding: {speaker_name}/{selected_file}")
         
-        # 加载speaker embedding
-        spk_embd = np.load(spk_file_path)  # [spk_embd_dim]
-        spk_embd = torch.from_numpy(spk_embd).float().unsqueeze(0).to(self.dev)  # [1, spk_embd_dim]
+        spk_embd = np.load(spk_file_path)
+        spk_embd = torch.from_numpy(spk_embd).float().unsqueeze(0).to(self.dev)
         
-        print(f"✅ Loaded speaker embedding: shape={spk_embd.shape}")
+        print(f" Loaded speaker embedding: shape={spk_embd.shape}")
         return spk_embd
 
     def get_unit_f0(self, wav, tran):
@@ -158,51 +142,31 @@ class Svc(object):
         return c, f0, uv
     
     def infer(self, speaker, tran, raw_path):
-        """
-        执行语音转换推理
-        
-        Args:
-            speaker: 目标说话人名称（对应dataset下的文件夹名）
-            tran: 音调偏移（半音）
-            raw_path: 源音频路径
-            
-        Returns:
-            audio: 转换后的音频
-            audio_length: 音频长度
-            n_frames: 帧数
-        """
         torchaudio.set_audio_backend("soundfile")
         wav, sr = torchaudio.load(raw_path)
         if not hasattr(self,"audio_resample_transform") or self.audio16k_resample_transform.orig_freq != sr:
             self.audio_resample_transform = torchaudio.transforms.Resample(sr,self.target_sample)
-        wav = self.audio_resample_transform(wav).numpy()[0]  # (100080,)
+        wav = self.audio_resample_transform(wav).numpy()[0]
 
-        # 1. 提取源音频的内容特征（units, f0, volume）
         c, f0, uv = self.get_unit_f0(wav, tran)
         n_frames = f0.size(1)
         c = c.to(self.dtype)
         f0 = f0.to(self.dtype)
         uv = uv.to(self.dtype)
 
-        # 2. 加载目标说话人的speaker embedding
-        spk_embd = self.load_speaker_embedding(speaker)  # [1, spk_embd_dim]
+        spk_embd = self.load_speaker_embedding(speaker)
 
         with torch.no_grad():
             start = time.time()
             
-            # 3. 提取源音频的音量
             audio = torch.FloatTensor(wav).to(self.dev)
             vol = self.volume_extractor.extract(audio[None,:])[None,:,None].to(self.dev)
             
-            # 4. 调整维度
-            f0 = f0[:,:,None]  # [1, T] -> [1, T, 1]
-            c = c.transpose(-1,-2)  # [1, units, T] -> [1, T, units]
+            f0 = f0[:,:,None]
+            c = c.transpose(-1,-2)
             
-            # 5. 执行推理（使用预加载的spk_embd）
-            # 模型返回 (audio_mel, attention_gate)
             audio_mel, attention_gate = self.diffusion_model(c, f0, vol, spk_embd=spk_embd, gt_spec=None, infer=True)
             
-            # 6. 使用vocoder生成音频
             audio = self.vocoder.infer(audio_mel, f0).squeeze()
             
             use_time = time.time() - start
@@ -211,7 +175,6 @@ class Svc(object):
         return audio, audio.shape[-1], n_frames
 
     def clear_empty(self):
-        # clean up vram
         torch.cuda.empty_cache()
 
 
@@ -219,7 +182,7 @@ class Svc(object):
                         raw_audio_path,
                         spk,
                         tran,
-                        slice_db=-40, # -40
+                        slice_db=-40,
                         pad_seconds=0.5,
                         clip_seconds=0,
                         ):
@@ -233,7 +196,6 @@ class Svc(object):
         audio = []
         for (slice_tag, data) in audio_data:
             print(f'#=====segment start, {round(len(data) / audio_sr, 3)}s======')
-            # padd
             length = int(np.ceil(len(data) / audio_sr * self.target_sample))
             if slice_tag:
                 print('jump empty segment')
@@ -249,7 +211,6 @@ class Svc(object):
                 per_length = int(np.ceil(len(dat) / audio_sr * self.target_sample)) if clip_seconds!=0 else length
                 if clip_seconds!=0: 
                     print(f'###=====segment clip start, {round(len(dat) / audio_sr, 3)}s======')
-                # padd
                 pad_len = int(audio_sr * pad_seconds)
                 dat = np.concatenate([np.zeros([pad_len]), dat, np.zeros([pad_len])])
                 raw_path = io.BytesIO()

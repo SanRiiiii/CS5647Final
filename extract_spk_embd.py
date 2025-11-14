@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-说话人嵌入提取脚本
-使用Wespeaker模型提取说话人嵌入特征
-支持多线程并行处理
+Speaker Embedding Extraction Script
+Extract speaker embedding features using Wespeaker model
+Supports multi-threaded parallel processing
 """
 
 import argparse
@@ -21,34 +21,34 @@ from random import shuffle
 
 def process_single_file(args):
     """
-    处理单个音频文件
+    Process a single audio file
     
     Args:
-        args: 包含文件路径和输出路径的元组
+        args: Tuple containing file path and output path
     """
     song_path, out_dir, model_path = args
     
     try:
-        # 读取音频并重采样到16kHz
+        # Load audio and resample to 16kHz
         y, sr = librosa.load(song_path, sr=16000)
         
-        # 创建临时文件
+        # Create temporary file
         temp_path = f"./tmp/{Path(song_path).name}"
         os.makedirs(os.path.dirname(temp_path), exist_ok=True)
         sf.write(temp_path, y, 16000)
         
-        # 加载模型并提取嵌入
+        # Load model and extract embedding
         model = wespeaker.load_model(model_path)
         emb = model.extract_embedding(temp_path)
         
         if isinstance(emb, torch.Tensor):
             emb = emb.cpu().numpy()
         
-        # 保存嵌入
+        # Save embedding
         output_path = out_dir / f"{Path(song_path).stem}.spk.npy"
         np.save(output_path, emb)
         
-        # 清理临时文件
+        # Clean up temporary file
         if os.path.exists(temp_path):
             os.remove(temp_path)
             
@@ -60,11 +60,11 @@ def process_single_file(args):
 
 def process_batch(file_args, model_path):
     """
-    处理一批文件
+    Process a batch of files
     
     Args:
-        file_args: 文件参数列表
-        model_path: 模型路径
+        file_args: List of file arguments
+        model_path: Model path
     """
     rank = mp.current_process()._identity
     rank = rank[0] if len(rank) > 0 else 0
@@ -81,18 +81,18 @@ def process_batch(file_args, model_path):
 
 def parallel_extract_spk_embd(base_dir, result_dir, model_path, num_processes=8):
     """
-    并行提取说话人嵌入
+    Extract speaker embeddings in parallel
     
     Args:
-        base_dir: 输入目录
-        result_dir: 输出目录
-        model_path: 模型路径
-        num_processes: 进程数
+        base_dir: Input directory
+        result_dir: Output directory
+        model_path: Model path
+        num_processes: Number of processes
     """
     base_dir = Path(base_dir)
     result_dir = Path(result_dir)
     
-    # 收集所有音频文件
+    # Collect all audio files
     all_files = []
     for spk in base_dir.iterdir():
         if spk.is_dir():
@@ -102,7 +102,7 @@ def parallel_extract_spk_embd(base_dir, result_dir, model_path, num_processes=8)
             
             for song in song_dir.iterdir():
                 if song.suffix.lower() == '.wav':
-                    # 检查是否已存在嵌入文件
+                    # Check if embedding file already exists
                     emb_path = out_dir / f"{song.stem}.spk.npy"
                     if not emb_path.exists():
                         all_files.append((song, out_dir))
@@ -113,28 +113,28 @@ def parallel_extract_spk_embd(base_dir, result_dir, model_path, num_processes=8)
         print("No files to process. All speaker embeddings already exist.")
         return
     
-    # 随机打乱文件列表
+    # Shuffle file list randomly
     shuffle(all_files)
     
-    # 创建临时目录
+    # Create temporary directory
     os.makedirs("./tmp", exist_ok=True)
     
-    # 并行处理
+    # Parallel processing
     with ProcessPoolExecutor(max_workers=num_processes) as executor:
         tasks = []
         for i in range(num_processes):
             start = int(i * len(all_files) / num_processes)
             end = int((i + 1) * len(all_files) / num_processes)
             file_chunk = all_files[start:end]
-            if file_chunk:  # 只有当chunk不为空时才提交任务
+            if file_chunk:  # Only submit task when chunk is not empty
                 tasks.append(executor.submit(process_batch, file_chunk, model_path))
         
-        # 等待所有任务完成
+        # Wait for all tasks to complete
         total_success = 0
         for task in tqdm.tqdm(tasks, position=0, desc="Overall progress"):
             total_success += task.result()
     
-    print(f"\n处理完成: {total_success}/{len(all_files)} 个文件成功处理")
+    print(f"\nProcessing completed: {total_success}/{len(all_files)} files processed successfully")
 
 def main():
     parser = argparse.ArgumentParser(description='Extract speaker embeddings using Wespeaker')
@@ -149,15 +149,15 @@ def main():
     
     args = parser.parse_args()
     
-    # 设置多进程启动方法
+    # Set multiprocessing start method
     mp.set_start_method("spawn", force=True)
     
-    # 检查模型路径
+    # Check model path
     if not os.path.exists(args.model_path):
         print(f"Error: Model path {args.model_path} does not exist")
         return
     
-    # 检查输入目录
+    # Check input directory
     if not os.path.exists(args.base_dir):
         print(f"Error: Base directory {args.base_dir} does not exist")
         return
@@ -167,7 +167,7 @@ def main():
     print(f"Output directory: {args.result_dir}")
     print(f"Model path: {args.model_path}")
     
-    # 开始处理
+    # Start processing
     parallel_extract_spk_embd(
         args.base_dir, 
         args.result_dir, 
