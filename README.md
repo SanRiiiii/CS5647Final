@@ -30,7 +30,7 @@ You should download the checkpoint [ContentVec](https://ibm.box.com/s/z1wgl1stco
 You should download the timbre extractor checkpoint of the [samresnet34](https://wenet.org.cn/downloads?models=wespeaker&version=voxblink2_samresnet34_ft.zip) and then unzip the zip file by 
 
 ```shell
-voxblink2_samresnet34_ft.zip
+unzip voxblink2_samresnet34_ft.zip
 ```
 ## Dataset Preparation 
 
