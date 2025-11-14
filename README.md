@@ -127,22 +127,11 @@ You should put the audios you want to convert under the `raw` directory firstly.
 ### Inference by the Teacher Model
 
 ```shell
-python inference_main.py \
-    --zero_shot \
-    --source_audio ./path_to_your_source_music.wav \
-    --target_speaker ./path_to_your_target_timbre.wav \
-    -ts 100 -m ./path_to_your_model_config
+python simple_inference.py \
+    --source_audio path_to_your_source_music \
+    --target_speaker path_to_your_target_timbre \
+    -k 0 \
+    -m path_to_your_model_ckpt \
+    -c path_to_your_model_config
 ```
--ts refers to the total number of iterative steps during inference for the teacher model
-
--tm refers to the teacher_model_path
-
--tc refers to the teacher_config_path
-
--n refers to the source audio
-
--k refers to the pitch shift, it can be positive and negative (semitone) values
-
--s refers to the target singer
-
 
