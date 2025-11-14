@@ -117,11 +117,9 @@ python extract_spk_embd.py --dataset_dir ./dataset
 ### 2. Train the  Model
 
 ```shell
-python train.py
+bash train.sh
 ```
 The checkpoints will be saved in the `logs` directory
-
-
 
 ## Inference
 You should put the audios you want to convert under the `raw` directory firstly.
@@ -129,7 +127,11 @@ You should put the audios you want to convert under the `raw` directory firstly.
 ### Inference by the Teacher Model
 
 ```shell
-python inference_main.py -ts 50 -tm "logs/teacher/model_800000.pt" -tc "logs/teacher/config.yaml" -n "src.wav" -k 0 -s "target_singer"
+python inference_main.py \
+    --zero_shot \
+    --source_audio ./path_to_your_source_music.wav \
+    --target_speaker ./path_to_your_target_timbre.wav \
+    -ts 100 -m ./path_to_your_model_config
 ```
 -ts refers to the total number of iterative steps during inference for the teacher model
 
