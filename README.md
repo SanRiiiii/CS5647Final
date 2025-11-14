@@ -113,6 +113,7 @@ python extract_spk_embd.py --dataset_dir ./dataset
 ## Training
 
 ### 1. Set up config file
+You can choose whether use F0 adversial training / attention mechanism or not. Set up in your config file.
 
 ### 2. Train the  Model
 
@@ -122,7 +123,6 @@ bash train.sh
 The checkpoints will be saved in the `logs` directory
 
 ## Inference
-You should put the audios you want to convert under the `raw` directory firstly.
 
 ### Inference by the Teacher Model
 
