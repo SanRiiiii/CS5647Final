@@ -97,7 +97,7 @@ python preprocessing2_flist.py
 ### 3. Generate Features
 
 ```shell
-python preprocessing3_feature.py -c your_config_file -n num_processes 
+python preprocessing3_feature.py -c path_to_your_config_file -n num_processes 
 ```
 ### 4. Extract Timbre Features
 
