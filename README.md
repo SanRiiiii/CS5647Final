@@ -31,7 +31,8 @@ You should download the pitch_extractor checkpoint of the [m4singer_pe](https://
 ```shell
 unzip m4singer_pe.zip
 ```
-### 3. samresnet34
+
+### 4. samresnet34
 You should download the pitch_extractor checkpoint of the [samresnet34](https://wenet.org.cn/downloads?models=wespeaker&version=voxblink2_samresnet34_ft.zip) and then unzip the zip file by 
 
 ```shell
