@@ -5,6 +5,10 @@
 
 Our Project is inspired by [CoMoSVC](https://github.com/Grace9994/CoMoSVC).
 
+<p align="center">
+  <img src="./model_arch.png" width="800">
+</p>
+
 
 ## Environment
 You can set up your Conda environment using the following command:
