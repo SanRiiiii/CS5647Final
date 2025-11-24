@@ -3,7 +3,7 @@
 
 </div>
 
-Our Project is inspired by [CoMoSVC](https://github.com/Grace9994/CoMoSVC).
+The implementation of our project is based on  [CoMoSVC](https://github.com/Grace9994/CoMoSVC).
 
 ## Model Architecture
 <p align="center">
