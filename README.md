@@ -7,7 +7,7 @@ The implementation of our project is based on  [CoMoSVC](https://github.com/Grac
 
 ## Model Architecture
 <p align="center">
-  <img src="./model_arch.png" width="800">
+  <img src="./model_arch_1.png" width="800">
 </p>
 
 
